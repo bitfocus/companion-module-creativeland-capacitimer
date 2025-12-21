@@ -3,6 +3,7 @@ const UpgradeScripts = require('./upgrades')
 const UpdateActions = require('./actions')
 const UpdateFeedbacks = require('./feedbacks')
 const UpdateVariableDefinitions = require('./variables')
+const UpdatePresets = require('./presets')
 const WebSocket = require('ws')
 const { Bonjour } = require('bonjour-service')
 
@@ -14,11 +15,10 @@ class ModuleInstance extends InstanceBase {
 			timeRemaining: 0,
 			isRunning: false,
 			isPaused: false,
-			lastSetTime: 0,
 			endTime: null,
 			pausedTimeRemaining: 0,
 			startTime: null,
-			initialTimeRemaining: 0,
+			resetTime: 0,
 			serverTime: 0,
 		}
 
@@ -30,8 +30,16 @@ class ModuleInstance extends InstanceBase {
 			colorNormal: '#44ff44',
 			colorWarning: '#ffaa00',
 			colorCritical: '#ff4444',
+			thresholdNormal: 300,
+			thresholdWarning: 60,
+			thresholdCritical: 0,
 			countUpAfterZero: false,
+			showTimer: true,
 			showTimeOfDay: true,
+			timerFont: 'monospace',
+			timerFontSize: 100,
+			timeOfDayFontSize: 100,
+			timeOfDayColor: '#ffffff',
 		}
 
 		this.discoveredInstances = []
@@ -45,6 +53,7 @@ class ModuleInstance extends InstanceBase {
 		this.updateActions()
 		this.updateFeedbacks()
 		this.updateVariableDefinitions()
+		this.updatePresets()
 
 		this.startBonjourDiscovery()
 
@@ -243,6 +252,8 @@ class ModuleInstance extends InstanceBase {
 						this.checkFeedbacks()
 					} else if (message.type === 'settings-update') {
 						this.settings = message.data
+						this.updateVariables()
+						this.checkFeedbacks()
 					}
 				} catch (err) {
 					this.log('error', `Error parsing WebSocket message: ${err.message}`)
@@ -364,7 +375,19 @@ class ModuleInstance extends InstanceBase {
 			time_remaining_seconds: this.timerState.timeRemaining,
 			is_running: this.timerState.isRunning ? 'Yes' : 'No',
 			is_paused: this.timerState.isPaused ? 'Yes' : 'No',
-			last_set_time: formatTime(this.timerState.lastSetTime),
+			reset_time: formatTime(this.timerState.resetTime),
+			timer_visible: this.settings.showTimer ? 'Yes' : 'No',
+			time_of_day_visible: this.settings.showTimeOfDay ? 'Yes' : 'No',
+			timer_font: this.settings.timerFont,
+			timer_font_size: this.settings.timerFontSize,
+			time_of_day_font_size: this.settings.timeOfDayFontSize,
+			color_normal: this.settings.colorNormal,
+			color_warning: this.settings.colorWarning,
+			color_critical: this.settings.colorCritical,
+			time_of_day_color: this.settings.timeOfDayColor,
+			threshold_normal: this.settings.thresholdNormal,
+			threshold_warning: this.settings.thresholdWarning,
+			threshold_critical: this.settings.thresholdCritical,
 		})
 	}
 
@@ -378,6 +401,10 @@ class ModuleInstance extends InstanceBase {
 
 	updateVariableDefinitions() {
 		UpdateVariableDefinitions(this)
+	}
+
+	updatePresets() {
+		UpdatePresets(this)
 	}
 }
 

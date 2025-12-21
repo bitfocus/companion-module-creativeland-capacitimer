@@ -33,7 +33,7 @@ module.exports = async function (self) {
 			type: 'boolean',
 			label: 'Change button color when timer is stopped',
 			defaultStyle: {
-				bgcolor: combineRgb(255, 0, 0),
+				bgcolor: combineRgb(50, 50, 50),
 				color: combineRgb(255, 255, 255),
 			},
 			options: [],
@@ -96,6 +96,89 @@ module.exports = async function (self) {
 			options: [],
 			callback: () => {
 				return self.timerState.timeRemaining < 0
+			},
+		},
+		timer_visible: {
+			name: 'Timer Visible',
+			type: 'boolean',
+			label: 'Change button color when timer is visible',
+			defaultStyle: {
+				bgcolor: combineRgb(85, 135, 247),
+				color: combineRgb(255, 255, 255),
+			},
+			options: [],
+			callback: () => {
+				return self.settings.showTimer
+			},
+		},
+		time_of_day_visible: {
+			name: 'Time of Day Visible',
+			type: 'boolean',
+			label: 'Change button color when time of day is visible',
+			defaultStyle: {
+				bgcolor: combineRgb(85, 135, 247),
+				color: combineRgb(255, 255, 255),
+			},
+			options: [],
+			callback: () => {
+				return self.settings.showTimeOfDay
+			},
+		},
+		timer_color_normal: {
+			name: 'Timer Color: Normal',
+			type: 'advanced',
+			label: 'Change button color based on app normal color threshold',
+			description: 'Uses the normal color and threshold set in the Capacitimer app',
+			options: [],
+			callback: () => {
+				const time = self.timerState.timeRemaining
+				if (time >= self.settings.thresholdNormal) {
+					// Parse hex color from settings
+					const hex = self.settings.colorNormal.replace('#', '')
+					const r = parseInt(hex.substring(0, 2), 16)
+					const g = parseInt(hex.substring(2, 4), 16)
+					const b = parseInt(hex.substring(4, 6), 16)
+					return { bgcolor: combineRgb(r, g, b) }
+				}
+				return {}
+			},
+		},
+		timer_color_warning: {
+			name: 'Timer Color: Warning',
+			type: 'advanced',
+			label: 'Change button color based on app warning color threshold',
+			description: 'Uses the warning color and threshold set in the Capacitimer app',
+			options: [],
+			callback: () => {
+				const time = self.timerState.timeRemaining
+				if (time < self.settings.thresholdNormal && time >= self.settings.thresholdWarning) {
+					// Parse hex color from settings
+					const hex = self.settings.colorWarning.replace('#', '')
+					const r = parseInt(hex.substring(0, 2), 16)
+					const g = parseInt(hex.substring(2, 4), 16)
+					const b = parseInt(hex.substring(4, 6), 16)
+					return { bgcolor: combineRgb(r, g, b) }
+				}
+				return {}
+			},
+		},
+		timer_color_critical: {
+			name: 'Timer Color: Critical',
+			type: 'advanced',
+			label: 'Change button color based on app critical color threshold',
+			description: 'Uses the critical color and threshold set in the Capacitimer app',
+			options: [],
+			callback: () => {
+				const time = self.timerState.timeRemaining
+				if (time < self.settings.thresholdWarning && time >= self.settings.thresholdCritical) {
+					// Parse hex color from settings
+					const hex = self.settings.colorCritical.replace('#', '')
+					const r = parseInt(hex.substring(0, 2), 16)
+					const g = parseInt(hex.substring(2, 4), 16)
+					const b = parseInt(hex.substring(4, 6), 16)
+					return { bgcolor: combineRgb(r, g, b) }
+				}
+				return {}
 			},
 		},
 	})
