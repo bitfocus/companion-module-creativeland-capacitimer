@@ -560,9 +560,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"companion-module-capacitimer@workspace:.":
+"companion-module-creativeland-capacitimer@workspace:.":
   version: 0.0.0-use.local
-  resolution: "companion-module-capacitimer@workspace:."
+  resolution: "companion-module-creativeland-capacitimer@workspace:."
   dependencies:
     "@companion-module/base": "npm:~1.12.1"
     "@companion-module/tools": "npm:^2.4.2"
