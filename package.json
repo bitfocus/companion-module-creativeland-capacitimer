@@ -1,5 +1,5 @@
 {
-	"name": "companion-module-capacitimer",
+	"name": "companion-module-creativeland-capacitimer",
 	"version": "1.0.0",
 	"main": "main.js",
 	"scripts": {
@@ -9,7 +9,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/bitfocus/companion-module-capacitimer.git"
+		"url": "git+https://github.com/bitfocus/companion-module-creativeland-capacitimer.git"
 	},
 	"engines": {
 		"node": "^22.20",

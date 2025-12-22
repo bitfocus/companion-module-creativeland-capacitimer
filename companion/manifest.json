@@ -1,12 +1,12 @@
 {
-	"id": "capacitimer",
-	"name": "capacitimer",
+	"id": "creativeland-capacitimer",
+	"name": "creativeland-capacitimer",
 	"shortname": "capacitimer",
-	"description": "Control and monitor Capacitimer timer application",
+	"description": "Control and monitor Capacitimer speaker timer",
 	"version": "1.0.0",
 	"license": "MIT",
-	"repository": "git+https://github.com/bitfocus/companion-module-capacitimer.git",
-	"bugs": "https://github.com/bitfocus/companion-module-capacitimer/issues",
+	"repository": "git+https://github.com/bitfocus/companion-module-creativeland-capacitimer.git",
+	"bugs": "https://github.com/bitfocus/companion-module-creativeland-capacitimer/issues",
 	"maintainers": [
 		{
 			"name": "Tom Hillmeyer",
