@@ -1,6 +1,8 @@
 # companion-module-capacitimer
 
-Bitfocus Companion module for controlling [Capacitimer](https://github.com/tomhillmeyer/capacitimer)
+Bitfocus Companion module for controlling [Capacitimer](https://github.com/tomhillmeyer/capacitimer).
+
+NOTE: Compatible with Capacitimer v1.2.1+
 
 ## Features
 

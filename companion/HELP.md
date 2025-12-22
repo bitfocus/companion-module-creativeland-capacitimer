@@ -1,5 +1,7 @@
 # Capacitimer
 
+NOTE: Compatible with Capacitimer v1.2.1+
+
 ## Network Discovery
 
 The module uses mDNS/Bonjour to automatically discover Capacitimer instances on your network. Discovered instances appear in the configuration dropdown.
