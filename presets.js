@@ -547,8 +547,8 @@ module.exports = function (self) {
 		style: {
 			text: 'TIMER:\\n$(capacitimer:time_remaining)\\n\\nRESET:\\n$(capacitimer:reset_time)',
 			size: '12',
-			color: combineRgb(255, 255, 255),
-			bgcolor: combineRgb(0, 0, 0),
+			color: combineRgb(0, 0, 0),
+			bgcolor: combineRgb(100, 100, 100),
 		},
 		steps: [
 			{
