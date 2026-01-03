@@ -32,7 +32,7 @@ NOTE: Compatible with Capacitimer v1.2.1+
 - **Display State**: Timer visible, time of day visible
 - **Dynamic Colors**: Automatically sync with app's color settings and thresholds
 
-### Variables (17 total)
+### Variables
 - Timer state: time remaining (formatted & seconds), running, paused, reset time
 - Display settings: visibility, fonts, font sizes
 - Colors: normal, warning, critical, time of day
@@ -47,7 +47,7 @@ NOTE: Compatible with Capacitimer v1.2.1+
 
 ## Actions
 
-### Timer Control (6 actions)
+### Timer Control
 - Start Timer
 - Pause Timer
 - Reset Timer
@@ -55,43 +55,42 @@ NOTE: Compatible with Capacitimer v1.2.1+
 - Set Timer (hours, minutes, seconds with keepRunning option)
 - Adjust Timer (add/subtract seconds)
 
-### Display Control (5 actions)
+### Display Contro
 - Toggle Timer Visibility
 - Toggle Time of Day
 - Set Timer Font (dropdown: 5 monospace fonts)
 - Set Timer Font Size (0-100%)
 - Set Time of Day Font Size (0-100%)
 
-### Color & Appearance (3 actions)
+### Color & Appearance
 - Set Timer Colors (normal, warning, critical)
 - Set Color Thresholds (normal, warning, critical in seconds)
 - Set Time of Day Color
 
-### Settings (1 action)
+### Settings
 - Update Settings (batch update display format options)
 
 ## Feedbacks
 
-### Timer State (4 feedbacks)
+### Timer State
 - Timer Running
 - Timer Paused
 - Timer Stopped
 - Timer Negative (Count Up)
 
-### Time-Based (2 feedbacks)
+### Time-Based
 - Time Remaining Less Than
 - Time Remaining Greater Than
 
-### Display State (2 feedbacks)
+### Display State
 - Timer Visible
 - Time of Day Visible
 
-### Dynamic Color Feedbacks (3 advanced feedbacks)
+### Dynamic Color Feedbacks
 - Timer Color: Normal
 - Timer Color: Warning
 - Timer Color: Critical
 
-*These sync automatically with the colors and thresholds set in the Capacitimer app!*
 
 ## Setup
 
@@ -100,9 +99,6 @@ NOTE: Compatible with Capacitimer v1.2.1+
 3. Configure connection:
    - Select from **Discovered Capacitimers** (auto-discovery via mDNS/Bonjour)
    - Or manually enter IP address
-4. Module connects automatically via:
-   - REST API: `http://[host]` (port 80+)
-   - WebSocket: `ws://[host]:3001`
 
 ## Variable Support
 
@@ -111,12 +107,6 @@ Most actions support Companion variables for dynamic control:
 - Font sizes
 - Color hex codes
 - Threshold values
-
-Example: `$(capacitimer:time_remaining_seconds)` can be used in any numeric field.
-
-## Network Discovery
-
-The module uses mDNS/Bonjour for automatic network discovery. Capacitimer instances broadcast as `_http._tcp` services and appear in the configuration dropdown.
 
 ## License
 
