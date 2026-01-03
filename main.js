@@ -85,8 +85,21 @@ class ModuleInstance extends InstanceBase {
 
 	async configUpdated(config) {
 		this.config = config
+
+		// Clear any existing timers to prevent conflicts and duplicates
+		if (this.reconnectTimer) {
+			clearTimeout(this.reconnectTimer)
+			this.reconnectTimer = null
+		}
+		if (this.pollInterval) {
+			clearInterval(this.pollInterval)
+			this.pollInterval = null
+		}
+
+		// Close existing WebSocket connection
 		if (this.ws) {
 			this.ws.close()
+			this.ws = null
 		}
 
 		// Only connect if a host is configured
@@ -94,6 +107,7 @@ class ModuleInstance extends InstanceBase {
 		if (host) {
 			this.updateStatus(InstanceStatus.Connecting)
 			this.initWebSocket()
+			this.pollTimer()
 		} else {
 			this.updateStatus(InstanceStatus.Disconnected, 'No Capacitimer instance selected')
 		}
@@ -240,6 +254,12 @@ class ModuleInstance extends InstanceBase {
 			this.ws.on('open', () => {
 				this.log('info', 'WebSocket connected')
 				this.updateStatus(InstanceStatus.Ok)
+
+				// Clear reconnect timer if it exists (successful connection)
+				if (this.reconnectTimer) {
+					clearTimeout(this.reconnectTimer)
+					this.reconnectTimer = null
+				}
 			})
 
 			this.ws.on('message', (data) => {
