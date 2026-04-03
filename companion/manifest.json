@@ -3,7 +3,7 @@
 	"name": "creativeland-capacitimer",
 	"shortname": "capacitimer",
 	"description": "Control and monitor Capacitimer speaker timer",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-creativeland-capacitimer.git",
 	"bugs": "https://github.com/bitfocus/companion-module-creativeland-capacitimer/issues",

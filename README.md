@@ -2,7 +2,7 @@
 
 Bitfocus Companion module for controlling [Capacitimer](https://github.com/tomhillmeyer/capacitimer).
 
-NOTE: Compatible with Capacitimer v1.2.1+
+NOTE: Compatible with Capacitimer v1.4.0+
 
 ## Features
 
@@ -15,35 +15,39 @@ NOTE: Compatible with Capacitimer v1.2.1+
 ### Display Control
 - Toggle timer visibility
 - Toggle time of day display
-- Choose from 5 monospace fonts (Roboto Mono, Kode Mono, PT Mono, Share Tech Mono, Courier Prime)
-- Adjust timer and time of day font sizes independently (0-100%)
-- All display controls support variables
+- Move output window to a specific display (fullscreen) or return to windowed mode
+- Adjust timer and time of day font sizes independently (0–100%)
+- Choose font from host system's installed fonts *(Pro)*
 
 ### Colors & Appearance
 - Configure colors for normal, warning, and critical states
-- Set custom thresholds for color state transitions
+- Set warning and critical thresholds with individual enable toggles
 - Customize time of day color
-- Dynamic color feedbacks that sync with app settings
-- All color and threshold controls support variables
+- Single **Timer Color** feedback that automatically mirrors the app's current color state
+
+### Message Display *(Pro)*
+- Set a custom text message on the display
+- Show/hide message independently of the timer
 
 ### Feedbacks
-- **Timer State**: Running, paused, stopped, counting up
-- **Time-Based**: Less than/greater than thresholds
-- **Display State**: Timer visible, time of day visible
-- **Dynamic Colors**: Automatically sync with app's color settings and thresholds
+- **Timer State**: Running, paused, stopped, counting past zero
+- **Time-Based**: Less than / greater than configurable thresholds
+- **Display State**: Timer visible, time of day visible, message visible *(Pro)*
+- **Timer Color**: Automatically mirrors the app's normal/warning/critical color
 
 ### Variables
 - Timer state: time remaining (formatted & seconds), running, paused, reset time
-- Display settings: visibility, fonts, font sizes
-- Colors: normal, warning, critical, time of day
-- Thresholds: normal, warning, critical
+- Display settings: visibility, font size
+- Colors and thresholds
+- Display output state: fullscreen, window closed
+- Pro: timer font, timer direction, message text, message visible
 
 ### Presets
 - **Timer Control**: Start, pause, reset, toggle buttons
 - **Quick Set**: 1min, 5min, 10min, 30min, 45min, 1hr, 1.5hr, 2hr presets
 - **Adjustments**: +/- 1min and 5min buttons
-- **Display**: Toggle visibility buttons
-- **Status**: Live timer display with dynamic color coding
+- **Display**: Toggle visibility, set output display, toggle message *(Pro)*
+- **Status**: Live timer display with automatic color coding
 
 ## Actions
 
@@ -55,20 +59,25 @@ NOTE: Compatible with Capacitimer v1.2.1+
 - Set Timer (hours, minutes, seconds with keepRunning option)
 - Adjust Timer (add/subtract seconds)
 
-### Display Contro
+### Display Control
 - Toggle Timer Visibility
 - Toggle Time of Day
-- Set Timer Font (dropdown: 5 monospace fonts)
-- Set Timer Font Size (0-100%)
-- Set Time of Day Font Size (0-100%)
+- Set Timer Font Size (0–100%)
+- Set Time of Day Font Size (0–100%)
+- Set Timer Font *(Pro)* — populated from host system fonts
+- Set Output Display — fullscreen on a specific display, or windowed
+
+### Message *(Pro)*
+- Set Message Text
+- Show/Hide Message (Toggle / Show / Hide)
 
 ### Color & Appearance
 - Set Timer Colors (normal, warning, critical)
-- Set Color Thresholds (normal, warning, critical in seconds)
+- Set Color Thresholds (warning and critical, each with enable toggle)
 - Set Time of Day Color
 
 ### Settings
-- Update Settings (batch update display format options)
+- Update Settings (show/hide hours, minutes, seconds, milliseconds; count up after zero; time of day format; timer direction *(Pro)*)
 
 ## Feedbacks
 
@@ -76,7 +85,7 @@ NOTE: Compatible with Capacitimer v1.2.1+
 - Timer Running
 - Timer Paused
 - Timer Stopped
-- Timer Negative (Count Up)
+- Timer Negative (counting past zero)
 
 ### Time-Based
 - Time Remaining Less Than
@@ -85,29 +94,51 @@ NOTE: Compatible with Capacitimer v1.2.1+
 ### Display State
 - Timer Visible
 - Time of Day Visible
+- Message Visible *(Pro)*
 
-### Dynamic Color Feedbacks
-- Timer Color: Normal
-- Timer Color: Warning
-- Timer Color: Critical
+### Dynamic Color
+- Timer Color — mirrors the app's current color based on enabled thresholds
 
+## Variables
+
+### Timer State
+- `time_remaining` — Formatted (HH:MM:SS)
+- `time_remaining_seconds` — Raw seconds
+- `is_running` — "Yes" / "No"
+- `is_paused` — "Yes" / "No"
+- `reset_time` — Formatted (HH:MM:SS)
+
+### Display Settings
+- `timer_visible`, `time_of_day_visible` — "Yes" / "No"
+- `timer_font_size`, `time_of_day_font_size` — Percentage (0–100)
+
+### Colors & Thresholds
+- `color_normal`, `color_warning`, `color_critical`, `time_of_day_color` — Hex strings
+- `threshold_warning`, `threshold_critical` — Seconds
+
+### Display Output
+- `display_is_fullscreen` — "Yes" / "No"
+- `display_no_output` — "Yes" / "No"
+
+### Pro *(hidden without active license)*
+- `timer_font` — Font family name
+- `timer_direction` — "countdown" or "countup"
+- `message_text` — Current message text
+- `message_visible` — "Yes" / "No"
 
 ## Setup
 
 1. Install and run the Capacitimer application
 2. Add this module in Companion
-3. Configure connection:
-   - Select from **Discovered Capacitimers** (auto-discovery via mDNS/Bonjour)
-   - Or manually enter IP address
+3. Configure the connection:
+   - Select from **Discovered Capacitimers** (auto-discovery via mDNS/Bonjour — requires the instance name to start with "capacitimer")
+   - Or manually enter an IP address or hostname (e.g. `capacitimer.local`, `mydevice.local`, or `192.168.1.42`)
+4. The module auto-detects the WebSocket port by querying the server status endpoint. If that fails, it scans ports 3001–3010.
 
-## Variable Support
+## Pro License
 
-Most actions support Companion variables for dynamic control:
-- Timer values (hours, minutes, seconds, adjust amount)
-- Font sizes
-- Color hex codes
-- Threshold values
+Pro features (custom fonts, timer direction, message display, background colors) require a Pro license activated in the Capacitimer app. This module detects the license status on connect and automatically shows or hides Pro actions, feedbacks, and variables.
 
 ## License
 
-MIT - See [LICENSE](./LICENSE)
+MIT — See [LICENSE](./LICENSE)
