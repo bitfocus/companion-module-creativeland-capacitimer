@@ -1,5 +1,63 @@
 module.exports = function (self) {
-	self.setActionDefinitions({
+	const isPro = self.licenseState.activated
+
+	const updateSettingsOptions = [
+		{
+			id: 'showHours',
+			type: 'checkbox',
+			label: 'Show Hours',
+			default: true,
+		},
+		{
+			id: 'showMinutes',
+			type: 'checkbox',
+			label: 'Show Minutes',
+			default: true,
+		},
+		{
+			id: 'showSeconds',
+			type: 'checkbox',
+			label: 'Show Seconds',
+			default: true,
+		},
+		{
+			id: 'showMilliseconds',
+			type: 'checkbox',
+			label: 'Show Milliseconds',
+			default: false,
+		},
+		{
+			id: 'countUpAfterZero',
+			type: 'checkbox',
+			label: 'Count Up After Zero',
+			default: false,
+		},
+		{
+			id: 'timeOfDayFormat',
+			type: 'dropdown',
+			label: 'Time of Day Format',
+			default: '12',
+			choices: [
+				{ id: '12', label: '12-hour' },
+				{ id: '24', label: '24-hour' },
+			],
+		},
+	]
+
+	if (isPro) {
+		updateSettingsOptions.push({
+			id: 'timerDirection',
+			type: 'dropdown',
+			label: 'Timer Direction',
+			default: 'countdown',
+			choices: [
+				{ id: 'countdown', label: 'Countdown' },
+				{ id: 'countup', label: 'Count Up' },
+			],
+		})
+	}
+
+	const actions = {
 		start_timer: {
 			name: 'Start Timer',
 			options: [],
@@ -121,47 +179,21 @@ module.exports = function (self) {
 		},
 		update_settings: {
 			name: 'Update Settings',
-			options: [
-				{
-					id: 'showHours',
-					type: 'checkbox',
-					label: 'Show Hours',
-					default: true,
-				},
-				{
-					id: 'showMinutes',
-					type: 'checkbox',
-					label: 'Show Minutes',
-					default: true,
-				},
-				{
-					id: 'showSeconds',
-					type: 'checkbox',
-					label: 'Show Seconds',
-					default: true,
-				},
-				{
-					id: 'showMilliseconds',
-					type: 'checkbox',
-					label: 'Show Milliseconds',
-					default: false,
-				},
-				{
-					id: 'countUpAfterZero',
-					type: 'checkbox',
-					label: 'Count Up After Zero',
-					default: false,
-				},
-			],
+			options: updateSettingsOptions,
 			callback: async (event) => {
 				try {
-					await self.sendCommand('/api/settings', {
+					const body = {
 						showHours: event.options.showHours,
 						showMinutes: event.options.showMinutes,
 						showSeconds: event.options.showSeconds,
 						showMilliseconds: event.options.showMilliseconds,
 						countUpAfterZero: event.options.countUpAfterZero,
-					})
+						timeOfDayFormat: event.options.timeOfDayFormat,
+					}
+					if (isPro) {
+						body.timerDirection = event.options.timerDirection
+					}
+					await self.sendCommand('/api/settings', body)
 				} catch (err) {
 					self.log('error', `Update settings failed: ${err.message}`)
 				}
@@ -239,33 +271,6 @@ module.exports = function (self) {
 				}
 			},
 		},
-		set_timer_font: {
-			name: 'Set Timer Font',
-			options: [
-				{
-					id: 'font',
-					type: 'dropdown',
-					label: 'Font Family',
-					default: 'Roboto Mono',
-					choices: [
-						{ id: 'Roboto Mono', label: 'Roboto Mono' },
-						{ id: 'Kode Mono', label: 'Kode Mono' },
-						{ id: 'PT Mono', label: 'PT Mono' },
-						{ id: 'Share Tech Mono', label: 'Share Tech Mono' },
-						{ id: 'Courier Prime', label: 'Courier Prime' },
-					],
-				},
-			],
-			callback: async (event) => {
-				try {
-					await self.sendCommand('/api/settings', {
-						timerFont: event.options.font,
-					})
-				} catch (err) {
-					self.log('error', `Set timer font failed: ${err.message}`)
-				}
-			},
-		},
 		set_timer_colors: {
 			name: 'Set Timer Colors',
 			options: [
@@ -311,18 +316,17 @@ module.exports = function (self) {
 			name: 'Set Color Thresholds',
 			options: [
 				{
-					id: 'thresholdNormal',
-					type: 'textinput',
-					label: 'Normal Threshold (seconds)',
-					default: '300',
-					useVariables: true,
-				},
-				{
 					id: 'thresholdWarning',
 					type: 'textinput',
 					label: 'Warning Threshold (seconds)',
 					default: '60',
 					useVariables: true,
+				},
+				{
+					id: 'enableWarning',
+					type: 'checkbox',
+					label: 'Enable Warning Threshold',
+					default: false,
 				},
 				{
 					id: 'thresholdCritical',
@@ -331,17 +335,23 @@ module.exports = function (self) {
 					default: '0',
 					useVariables: true,
 				},
+				{
+					id: 'enableCritical',
+					type: 'checkbox',
+					label: 'Enable Critical Threshold',
+					default: false,
+				},
 			],
 			callback: async (event) => {
 				try {
-					const thresholdNormal = parseInt(await self.parseVariablesInString(String(event.options.thresholdNormal))) || 300
 					const thresholdWarning = parseInt(await self.parseVariablesInString(String(event.options.thresholdWarning))) || 60
 					const thresholdCritical = parseInt(await self.parseVariablesInString(String(event.options.thresholdCritical))) || 0
 
 					await self.sendCommand('/api/settings', {
-						thresholdNormal: thresholdNormal,
 						thresholdWarning: thresholdWarning,
 						thresholdCritical: thresholdCritical,
+						enableWarning: event.options.enableWarning,
+						enableCritical: event.options.enableCritical,
 					})
 				} catch (err) {
 					self.log('error', `Set color thresholds failed: ${err.message}`)
@@ -371,5 +381,112 @@ module.exports = function (self) {
 				}
 			},
 		},
-	})
+		set_display: {
+			name: 'Set Output Display',
+			options: [
+				{
+					id: 'displayId',
+					type: 'dropdown',
+					label: 'Display',
+					default: 'windowed',
+					choices: [
+						{ id: 'windowed', label: 'Windowed (no fullscreen)' },
+						...self.availableDisplays.map((d) => ({
+							id: String(d.id),
+							label: d.label || `Display ${d.id}`,
+						})),
+					],
+				},
+			],
+			callback: async (event) => {
+				try {
+					const displayId = event.options.displayId === 'windowed' ? null : parseInt(event.options.displayId)
+					await self.sendCommand('/api/displays/set', { displayId })
+				} catch (err) {
+					self.log('error', `Set display failed: ${err.message}`)
+				}
+			},
+		},
+	}
+
+	if (isPro) {
+		const fontChoices =
+			self.availableFonts.length > 0
+				? self.availableFonts.map((f) => ({ id: f, label: f }))
+				: [{ id: 'monospace', label: 'monospace' }]
+
+		actions.set_timer_font = {
+			name: 'Set Timer Font',
+			options: [
+				{
+					id: 'font',
+					type: 'dropdown',
+					label: 'Font Family',
+					default: fontChoices[0].id,
+					choices: fontChoices,
+				},
+			],
+			callback: async (event) => {
+				try {
+					await self.sendCommand('/api/settings', {
+						timerFont: event.options.font,
+					})
+				} catch (err) {
+					self.log('error', `Set timer font failed: ${err.message}`)
+				}
+			},
+		}
+
+		actions.set_message = {
+			name: 'Set Message Text',
+			options: [
+				{
+					id: 'text',
+					type: 'textinput',
+					label: 'Message Text (leave empty to clear)',
+					default: '',
+					useVariables: true,
+				},
+			],
+			callback: async (event) => {
+				try {
+					const text = await self.parseVariablesInString(event.options.text)
+					await self.sendCommand('/api/message/set', { text })
+				} catch (err) {
+					self.log('error', `Set message failed: ${err.message}`)
+				}
+			},
+		}
+
+		actions.toggle_message = {
+			name: 'Show/Hide Message',
+			options: [
+				{
+					id: 'visible',
+					type: 'dropdown',
+					label: 'Visibility',
+					default: 'toggle',
+					choices: [
+						{ id: 'toggle', label: 'Toggle' },
+						{ id: 'show', label: 'Show' },
+						{ id: 'hide', label: 'Hide' },
+					],
+				},
+			],
+			callback: async (event) => {
+				try {
+					const choice = event.options.visible
+					if (choice === 'toggle') {
+						await self.sendCommand('/api/message/toggle')
+					} else {
+						await self.sendCommand('/api/message/toggle', { visible: choice === 'show' })
+					}
+				} catch (err) {
+					self.log('error', `Toggle message failed: ${err.message}`)
+				}
+			},
+		}
+	}
+
+	self.setActionDefinitions(actions)
 }

@@ -1,4 +1,4 @@
-const { InstanceBase, Regex, runEntrypoint, InstanceStatus } = require('@companion-module/base')
+const { InstanceBase, runEntrypoint, InstanceStatus } = require('@companion-module/base')
 const UpgradeScripts = require('./upgrades')
 const UpdateActions = require('./actions')
 const UpdateFeedbacks = require('./feedbacks')
@@ -19,6 +19,7 @@ class ModuleInstance extends InstanceBase {
 			pausedTimeRemaining: 0,
 			startTime: null,
 			resetTime: 0,
+			targetTime: 0,
 			serverTime: 0,
 		}
 
@@ -30,18 +31,40 @@ class ModuleInstance extends InstanceBase {
 			colorNormal: '#44ff44',
 			colorWarning: '#ffaa00',
 			colorCritical: '#ff4444',
-			thresholdNormal: 300,
 			thresholdWarning: 60,
 			thresholdCritical: 0,
+			enableWarning: false,
+			enableCritical: false,
 			countUpAfterZero: false,
 			showTimer: true,
 			showTimeOfDay: true,
+			timeOfDayFormat: '12',
 			timerFont: 'monospace',
 			timerFontSize: 100,
 			timeOfDayFontSize: 100,
 			timeOfDayColor: '#ffffff',
+			timerDirection: 'countdown',
+			backgroundColorDefault: '#000000',
+			backgroundColorAtZero: '#cc0000',
+			messageFontSize: 50,
+			messageLetterSpacing: 0,
+			messageColor: '#ffffff',
 		}
 
+		this.messageState = {
+			messageText: '',
+			messageVisible: false,
+		}
+
+		this.displayState = {
+			currentDisplayId: null,
+			isFullscreen: false,
+			noOutput: false,
+		}
+
+		this.licenseState = { activated: false }
+		this.availableFonts = []
+		this.availableDisplays = []
 		this.discoveredInstances = []
 		this.bonjour = null
 		this.bonjourBrowser = null
@@ -133,10 +156,10 @@ class ModuleInstance extends InstanceBase {
 			{
 				type: 'textinput',
 				id: 'host',
-				label: 'Manual IP Address (optional)',
+				label: 'Manual IP Address or Hostname (optional)',
 				width: 12,
 				default: '',
-				tooltip: 'Manually enter hostname or IP address',
+				tooltip: 'Manually enter hostname or IP address (e.g. capacitimer.local or 192.168.1.42). Use this if your Capacitimer has a custom mDNS name.',
 			},
 		]
 	}
@@ -239,8 +262,7 @@ class ModuleInstance extends InstanceBase {
 		this.discoveredInstances = []
 	}
 
-	initWebSocket() {
-		// Use manual host if provided, otherwise use discovered host
+	async initWebSocket() {
 		const host = this.config.host || this.config.discovered
 
 		if (!host) {
@@ -248,18 +270,49 @@ class ModuleInstance extends InstanceBase {
 			return
 		}
 
+		// Try to get the WebSocket port from the server status endpoint
+		let wsPort = null
 		try {
-			this.ws = new WebSocket(`ws://${host}:3001`)
+			const response = await fetch(`http://${host}/api/server/status`)
+			if (response.ok) {
+				const status = await response.json()
+				if (status.wsPort) {
+					wsPort = status.wsPort
+					this.log('debug', `Got WebSocket port from server status: ${wsPort}`)
+				}
+			}
+		} catch (err) {
+			this.log('debug', `Could not fetch server status, will scan ports: ${err.message}`)
+		}
 
-			this.ws.on('open', () => {
-				this.log('info', 'WebSocket connected')
+		if (wsPort) {
+			this.connectWebSocket(host, wsPort)
+		} else {
+			// Scan ports 3001–3010
+			this.wsScanPort = 3001
+			this.connectWebSocket(host, this.wsScanPort)
+		}
+	}
+
+	connectWebSocket(host, port) {
+		try {
+			this.ws = new WebSocket(`ws://${host}:${port}`)
+
+			this.ws.on('open', async () => {
+				this.log('info', `WebSocket connected on port ${port}`)
 				this.updateStatus(InstanceStatus.Ok)
+				this.wsScanPort = null
 
 				// Clear reconnect timer if it exists (successful connection)
 				if (this.reconnectTimer) {
 					clearTimeout(this.reconnectTimer)
 					this.reconnectTimer = null
 				}
+
+				// Fetch license status, fonts, and displays, then rebuild definitions
+				await this.fetchLicenseStatus()
+				await this.fetchFonts()
+				await this.fetchDisplays()
 			})
 
 			this.ws.on('message', (data) => {
@@ -274,6 +327,14 @@ class ModuleInstance extends InstanceBase {
 						this.settings = message.data
 						this.updateVariables()
 						this.checkFeedbacks()
+					} else if (message.type === 'message-update') {
+						this.messageState = message.data
+						this.updateVariables()
+						this.checkFeedbacks()
+					} else if (message.type === 'display-state-update') {
+						this.displayState = message.data
+						this.updateVariables()
+						this.checkFeedbacks()
 					}
 				} catch (err) {
 					this.log('error', `Error parsing WebSocket message: ${err.message}`)
@@ -281,11 +342,33 @@ class ModuleInstance extends InstanceBase {
 			})
 
 			this.ws.on('error', (err) => {
-				this.log('error', `WebSocket error: ${err.message}`)
-				this.updateStatus(InstanceStatus.ConnectionFailure)
+				// If we're scanning ports, try the next one
+				if (this.wsScanPort !== null && this.wsScanPort < 3010) {
+					this.wsScanPort++
+					this.log('debug', `Port ${port} failed, trying ${this.wsScanPort}`)
+					// The close event will fire after error; reconnect happens there
+				} else if (this.wsScanPort === null) {
+					this.log('error', `WebSocket error: ${err.message}`)
+					this.updateStatus(InstanceStatus.ConnectionFailure)
+				}
 			})
 
 			this.ws.on('close', () => {
+				const host = this.config.host || this.config.discovered
+
+				// If still scanning ports, try next port immediately
+				if (this.wsScanPort !== null && this.wsScanPort <= 3010) {
+					if (this.wsScanPort < 3010) {
+						this.connectWebSocket(host, this.wsScanPort)
+					} else {
+						this.log('warn', 'WebSocket port scan exhausted (3001–3010), giving up')
+						this.wsScanPort = null
+						this.updateStatus(InstanceStatus.ConnectionFailure)
+					}
+					return
+				}
+
+				// Normal disconnect — reconnect after 5 seconds
 				this.log('warn', 'WebSocket closed')
 				this.updateStatus(InstanceStatus.Disconnected)
 				this.reconnectTimer = setTimeout(() => {
@@ -295,6 +378,63 @@ class ModuleInstance extends InstanceBase {
 		} catch (err) {
 			this.log('error', `Failed to create WebSocket: ${err.message}`)
 			this.updateStatus(InstanceStatus.ConnectionFailure)
+		}
+	}
+
+	async fetchLicenseStatus() {
+		const host = this.config.host || this.config.discovered
+		if (!host) return
+
+		try {
+			const response = await fetch(`http://${host}/api/license/status`)
+			if (response.ok) {
+				const data = await response.json()
+				const wasActivated = this.licenseState.activated
+				this.licenseState = data
+				if (wasActivated !== data.activated) {
+					this.updateActions()
+					this.updateFeedbacks()
+					this.updateVariableDefinitions()
+				}
+			}
+		} catch (err) {
+			this.log('debug', `Failed to fetch license status: ${err.message}`)
+		}
+	}
+
+	async fetchFonts() {
+		const host = this.config.host || this.config.discovered
+		if (!host) return
+
+		try {
+			const response = await fetch(`http://${host}/api/fonts`)
+			if (response.ok) {
+				const data = await response.json()
+				if (data.fonts && data.fonts.length > 0) {
+					this.availableFonts = data.fonts
+					this.updateActions()
+				}
+			}
+		} catch (err) {
+			this.log('debug', `Failed to fetch fonts: ${err.message}`)
+		}
+	}
+
+	async fetchDisplays() {
+		const host = this.config.host || this.config.discovered
+		if (!host) return
+
+		try {
+			const response = await fetch(`http://${host}/api/displays`)
+			if (response.ok) {
+				const data = await response.json()
+				if (data.displays) {
+					this.availableDisplays = data.displays
+					this.updateActions()
+				}
+			}
+		} catch (err) {
+			this.log('debug', `Failed to fetch displays: ${err.message}`)
 		}
 	}
 
@@ -357,8 +497,13 @@ class ModuleInstance extends InstanceBase {
 					this.updateVariables()
 					this.checkFeedbacks()
 				}
+				if (data.message) {
+					this.messageState = data.message
+					this.updateVariables()
+					this.checkFeedbacks()
+				}
 			} else {
-				this.log('error', `Command ${endpoint} failed`)
+				this.log('error', `Command ${endpoint} failed: ${data.error || 'unknown error'}`)
 			}
 
 			return data
@@ -390,7 +535,7 @@ class ModuleInstance extends InstanceBase {
 			return isNegative ? `-${formatted}` : formatted
 		}
 
-		this.setVariableValues({
+		const values = {
 			time_remaining: formatTime(this.timerState.timeRemaining),
 			time_remaining_seconds: this.timerState.timeRemaining,
 			is_running: this.timerState.isRunning ? 'Yes' : 'No',
@@ -398,17 +543,26 @@ class ModuleInstance extends InstanceBase {
 			reset_time: formatTime(this.timerState.resetTime),
 			timer_visible: this.settings.showTimer ? 'Yes' : 'No',
 			time_of_day_visible: this.settings.showTimeOfDay ? 'Yes' : 'No',
-			timer_font: this.settings.timerFont,
 			timer_font_size: this.settings.timerFontSize,
 			time_of_day_font_size: this.settings.timeOfDayFontSize,
 			color_normal: this.settings.colorNormal,
 			color_warning: this.settings.colorWarning,
 			color_critical: this.settings.colorCritical,
 			time_of_day_color: this.settings.timeOfDayColor,
-			threshold_normal: this.settings.thresholdNormal,
 			threshold_warning: this.settings.thresholdWarning,
 			threshold_critical: this.settings.thresholdCritical,
-		})
+			display_is_fullscreen: this.displayState.isFullscreen ? 'Yes' : 'No',
+			display_no_output: this.displayState.noOutput ? 'Yes' : 'No',
+		}
+
+		if (this.licenseState.activated) {
+			values.timer_font = this.settings.timerFont
+			values.timer_direction = this.settings.timerDirection
+			values.message_text = this.messageState.messageText
+			values.message_visible = this.messageState.messageVisible ? 'Yes' : 'No'
+		}
+
+		this.setVariableValues(values)
 	}
 
 	updateActions() {

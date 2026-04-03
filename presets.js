@@ -545,7 +545,7 @@ module.exports = function (self) {
 		category: 'Status',
 		name: 'Timer Status',
 		style: {
-			text: 'TIMER:\\n$(capacitimer:time_remaining)\\n\\nRESET:\\n$(capacitimer:reset_time)',
+			text: 'TIMER:\\n$(capacitimer:time_remaining)\\nRESET:\\n$(capacitimer:reset_time)',
 			size: '12',
 			color: combineRgb(0, 0, 0),
 			bgcolor: combineRgb(100, 100, 100),
@@ -558,16 +558,7 @@ module.exports = function (self) {
 		],
 		feedbacks: [
 			{
-				feedbackId: 'timer_negative',
-			},
-			{
-				feedbackId: 'timer_color_critical',
-			},
-			{
-				feedbackId: 'timer_color_warning',
-			},
-			{
-				feedbackId: 'timer_color_normal',
+				feedbackId: 'timer_color',
 			},
 			{
 				feedbackId: 'timer_paused',
@@ -576,7 +567,102 @@ module.exports = function (self) {
 					color: combineRgb(0, 0, 0),
 				},
 			},
+			{
+				feedbackId: 'timer_negative',
+				style: {
+					bgcolor: combineRgb(204, 0, 0),
+					color: combineRgb(255, 255, 255),
+				},
+			},
 		],
+	}
+
+	// Display Control: Set Output Display
+	presets.set_display = {
+		type: 'button',
+		category: 'Display Control',
+		name: 'Set Output Display',
+		style: {
+			text: 'SET\nDISPLAY',
+			size: '14',
+			color: combineRgb(255, 255, 255),
+			bgcolor: combineRgb(50, 50, 50),
+		},
+		steps: [
+			{
+				down: [
+					{
+						actionId: 'set_display',
+					},
+				],
+				up: [],
+			},
+		],
+		feedbacks: [],
+	}
+
+	// Pro-only presets
+	if (self.licenseState.activated) {
+		presets.toggle_message = {
+			type: 'button',
+			category: 'Display Control',
+			name: 'Toggle Message Visibility',
+			style: {
+				text: 'SHOW\nMSG',
+				size: '14',
+				color: combineRgb(255, 255, 255),
+				bgcolor: combineRgb(50, 50, 50),
+			},
+			steps: [
+				{
+					down: [
+						{
+							actionId: 'toggle_message',
+							options: {
+								visible: 'toggle',
+							},
+						},
+					],
+					up: [],
+				},
+			],
+			feedbacks: [
+				{
+					feedbackId: 'message_visible',
+					style: {
+						bgcolor: combineRgb(85, 135, 247),
+						color: combineRgb(255, 255, 255),
+						text: 'HIDE\nMSG',
+					},
+				},
+			],
+		}
+
+		presets.set_message = {
+			type: 'button',
+			category: 'Display Control',
+			name: 'Set Message Text',
+			style: {
+				text: 'SET\nMSG',
+				size: '14',
+				color: combineRgb(255, 255, 255),
+				bgcolor: combineRgb(50, 50, 50),
+			},
+			steps: [
+				{
+					down: [
+						{
+							actionId: 'set_message',
+							options: {
+								text: '',
+							},
+						},
+					],
+					up: [],
+				},
+			],
+			feedbacks: [],
+		}
 	}
 
 	self.setPresetDefinitions(presets)
