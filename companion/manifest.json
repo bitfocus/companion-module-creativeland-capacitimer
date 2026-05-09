@@ -16,8 +16,8 @@
 	"runtime": {
 		"type": "node22",
 		"api": "nodejs-ipc",
-		"apiVersion": "1.12.0",
-		"entrypoint": "../main.js"
+		"apiVersion": "0.0.0",
+		"entrypoint": "../src/main.js"
 	},
 	"legacyIds": [],
 	"manufacturer": "Creativeland",

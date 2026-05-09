@@ -409,34 +409,38 @@ module.exports = function (self) {
 		},
 	}
 
-	if (isPro) {
-		const fontChoices =
-			self.availableFonts.length > 0
-				? self.availableFonts.map((f) => ({ id: f, label: f }))
-				: [{ id: 'monospace', label: 'monospace' }]
+	const fontChoices =
+		self.availableFonts.length > 0
+			? self.availableFonts.map((f) => ({ id: f, label: f }))
+			: [{ id: 'monospace', label: 'monospace' }]
 
-		actions.set_timer_font = {
-			name: 'Set Timer Font',
-			options: [
-				{
-					id: 'font',
-					type: 'dropdown',
-					label: 'Font Family',
-					default: fontChoices[0].id,
-					choices: fontChoices,
-				},
-			],
-			callback: async (event) => {
-				try {
-					await self.sendCommand('/api/settings', {
-						timerFont: event.options.font,
-					})
-				} catch (err) {
-					self.log('error', `Set timer font failed: ${err.message}`)
-				}
+	actions.set_timer_font = {
+		name: 'Set Timer Font (Pro)',
+		options: [
+			{
+				id: 'font',
+				type: 'dropdown',
+				label: 'Font Family',
+				default: fontChoices[0].id,
+				choices: fontChoices,
 			},
-		}
+		],
+		callback: async (event) => {
+			if (!isPro) {
+				self.log('warn', 'set_timer_font requires a Pro license')
+				return
+			}
+			try {
+				await self.sendCommand('/api/settings', {
+					timerFont: event.options.font,
+				})
+			} catch (err) {
+				self.log('error', `Set timer font failed: ${err.message}`)
+			}
+		},
+	}
 
+	if (isPro) {
 		actions.set_message = {
 			name: 'Set Message Text',
 			options: [

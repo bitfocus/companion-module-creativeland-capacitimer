@@ -138,7 +138,7 @@ module.exports = function (self) {
 	presets.set_timer_1min = {
 		type: 'button',
 		category: 'Set Timer',
-		name: 'Set Timer to 1 Minutes',
+		name: 'Set Timer to 1 Minute',
 		style: {
 			text: 'SET\\n1:00',
 			size: '14',

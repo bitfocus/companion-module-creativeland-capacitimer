@@ -16,6 +16,16 @@ Some actions, feedbacks, and variables require a **Pro license** activated in th
 
 ---
 
+## Upgrading from v1.0.x
+
+If upgrading from v1.0.1, be aware of the following changes:
+
+- **Variables removed:** `$(capacitimer:threshold_normal)` — removed entirely (replaced by `threshold_warning` and `threshold_critical`)
+- **Variables moved to Pro:** `$(capacitimer:timer_font)` — now requires a Pro license to resolve
+- **Feedback IDs unified:** `timer_color_normal`, `timer_color_warning`, and `timer_color_critical` have been replaced by a single `timer_color` feedback that automatically applies the correct color based on thresholds
+
+---
+
 ## Actions
 
 ### Timer Control
